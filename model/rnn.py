@@ -78,7 +78,7 @@ def TrainModel(model, loss_fn, optimizer, train_loader, val_loader, epochs=10):
         print("Train Loss : {:.3f}".format(torch.tensor(losses).mean()))
         CalcValLossAndAccuracy(model, loss_fn, val_loader)
 
-    torch.save(model.state_dict(), 'rnn_article_classifier.pt')
+    torch.save(model, 'rnn_article_classifier.pt')
 
 def MakePredictions(model, loader):
     Y_shuffled, Y_preds = [], []
@@ -95,7 +95,6 @@ class PandasDataset(Dataset):
     def __init__(self, dataframe):
         self.dataframe = dataframe[['Class Index', 'Description']]
         self.label = dataframe['Class Index']
-        #self.title = dataframe['Title']
         self.description = dataframe['Description']
 
     def __len__(self):
@@ -126,11 +125,9 @@ def main():
 
     max_words = 25
 
-    vocab_title = build_vocab_from_iterator(build_vocabulary([train['Title'], test['Title']]), min_freq=1, specials=["<UNK>"])
     vocab_description = build_vocab_from_iterator(build_vocabulary([train['Description'], test['Description']]), min_freq=1, specials=["<UNK>"])
 
-    vocab_title.set_default_index(vocab_title["<UNK>"])
-    vocab_description.set_default_index(vocab_title["<UNK>"])
+    vocab_description.set_default_index(vocab_description["<UNK>"])
 
     train = PandasDataset(train)
     test = PandasDataset(test)
