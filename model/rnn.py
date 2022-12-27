@@ -14,6 +14,12 @@ from sklearn.metrics import accuracy_score
 import gc
 from torch.optim import Adam
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import bentoml
+
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
 
 #Reproducing same results
 SEED = 2019
@@ -78,7 +84,13 @@ def TrainModel(model, loss_fn, optimizer, train_loader, val_loader, epochs=10):
         print("Train Loss : {:.3f}".format(torch.tensor(losses).mean()))
         CalcValLossAndAccuracy(model, loss_fn, val_loader)
 
-    torch.save(model, 'rnn_article_classifier.pt')
+    torch.save(model, "rnn_article_classifier.pt")
+
+    # bentoml.pytorch.save_model(
+    #     "rnn_article_classifier",
+    #     model,
+    #     signatures={"__call__": {"batchable": True, "batch_dim": 0}},
+    # )
 
 def MakePredictions(model, loader):
     Y_shuffled, Y_preds = [], []
@@ -114,6 +126,8 @@ class RNNClassifier(nn.Module):
 
     def forward(self, X_batch):
         embeddings = self.embedding_layer(X_batch)
+        #import pdb
+        #pdb.set_trace()
         output, hidden = self.rnn(embeddings, torch.randn(n_layers, len(X_batch), hidden_dim))
         return self.linear(output[:,-1])
 
