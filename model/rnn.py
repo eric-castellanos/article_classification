@@ -112,7 +112,7 @@ def TrainModel(model, loss_fn, optimizer, train_loader, val_loader, epochs=10):
         print("Train Loss : {:.3f}".format(torch.tensor(losses).mean()))
         CalcValLossAndAccuracy(model, loss_fn, val_loader)
 
-    torch.save(model, "rnn_article_classifier.pt")
+    torch.save(model, "models/rnn_article_classifier.pt")
 
     # bentoml.pytorch.save_model(
     #     "rnn_article_classifier",

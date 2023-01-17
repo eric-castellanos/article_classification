@@ -33,7 +33,7 @@ def main():
     print("Classification Report for Model - Test:")
     print(classification_report(y_test, y_pred, target_names=target_classes))
 
-    joblib.dump(model, "xgboost.pkl") 
+    joblib.dump(model, "models/xgboost.pkl") 
 
 if __name__ == '__main__':
     main()
