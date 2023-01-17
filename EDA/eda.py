@@ -2,17 +2,23 @@ import re
 
 import pandas as pd
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from dython import nominal
 
-def plot_hist(df, col, filename,):
+matplotlib.style.use('fivethirtyeight')
+
+def plot_hist(df, col, filename, title):
     """
     This function takes a dataframe and column 
     and plots a histogram for the series.
     """
     
-    df[col].plot.hist()
+    plt.style.use('seaborn-whitegrid') # nice and clean grid
+    plt.xlabel('Bins') 
+    plt.ylabel('Values')
+    df[col].plot.hist(title=title, bins=90, facecolor = '#2ab0ff', edgecolor='#169acf', linewidth=0.5, figsize=(20,10))
     plt.savefig('plots/%s.png' % filename)
     plt.clf()
 
@@ -21,8 +27,14 @@ def plot_horizontal_bar(df, filename):
     This function takes a dataframe and column 
     and plots a histogram for the series.
     """
+
     df = df[:10]
-    df.plot.barh()
+
+    my_colors = ['g', 'b']*5 # <-- this concatenates the list to itself 5 times.
+    my_colors = [(0.5,0.4,0.5), (0.75, 0.75, 0.25)]*5 # <-- make two custom RGBs and repeat/alternate them over all the bar elements.
+    my_colors = [(x/10.0, x/20.0, 0.75) for x in range(len(df))] # <-- Quick gradient example along the Red/Green dimensions.
+
+    df.plot.barh(x='Word', y='Frequency', color=my_colors, title='Word Frequency Plot - Description', figsize=(20,10)).invert_yaxis()
     plt.savefig('plots/%s.png' % filename)
     plt.clf()
 
@@ -36,7 +48,7 @@ def plot_corr_heatmap(data, filename):
     class_dummies = pd.get_dummies(data['Class Index'])
     data = data.drop(columns=['Title', 'Description'])
     #data = pd.concat([data,class_dummies], axis=1)
-    nominal.associations(data, figsize=(20,10),mark_columns=True)
+    nominal.associations(data, figsize=(20,15),mark_columns=True)
     plt.savefig('plots/%s.png' % filename)
     plt.clf()
 
@@ -47,17 +59,17 @@ def histogram_helper(train, test):
     series.
     """
 
-    plot_hist(train, 'Word Count Title', 'Word Count Title - Train')
-    plot_hist(test, 'Word Count Title', 'Word Count Title - Test')
+    plot_hist(train, 'Word Count Title', 'Word Count Title - Train', 'Word Count Title - Train')
+    plot_hist(test, 'Word Count Title', 'Word Count Title - Test', 'Word Count Title - Test')
 
-    plot_hist(train, 'Word Count Description', 'Word Count Description - Train')
-    plot_hist(test, 'Word Count Description', 'Word Count Description - Test')
+    plot_hist(train, 'Word Count Description', 'Word Count Description - Train', 'Word Count Description - Train')
+    plot_hist(test, 'Word Count Description', 'Word Count Description - Test', 'Word Count Description - Test')
 
-    plot_hist(train, 'Character Count Title', 'Character Count Title - Train')
-    plot_hist(test, 'Character Count Title', 'Character Count Title - Test')
+    plot_hist(train, 'Character Count Title', 'Character Count Title - Train', 'Character Count Title - Train')
+    plot_hist(test, 'Character Count Title', 'Character Count Title - Test', 'Character Count Title - Test')
 
-    plot_hist(train, 'Unique Count Description', 'Character Count Title - Train')
-    plot_hist(test, 'Unique Count Description', 'Character Count Title - Test')
+    plot_hist(train, 'Unique Count Description', 'Unique Count Description - Train', 'Unique Count Description - Train')
+    plot_hist(test, 'Unique Count Description', 'Unique Count Description - Test', 'Unique Count Description - Test')
 
 def most_common_words(df, col):
     """
@@ -88,10 +100,9 @@ def main():
     train = pd.read_csv('../data/processed/train.csv')
     test = pd.read_csv('../data/processed/test.csv')
 
-    #histogram_helper(train, test)
-    #corr_matrix = plot_corr_heatmap(train, "Training Data - Correlation Heatmap")
+    histogram_helper(train, test)
+    corr_matrix = plot_corr_heatmap(train, "Training Data - Correlation Heatmap")
     most_common_words_df = most_common_words(train, 'Description')
-    print(most_common_words_df)
     plot_horizontal_bar(most_common_words_df, "Training Data Description - Word Frequency")
     
 

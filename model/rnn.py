@@ -36,6 +36,34 @@ n_layers=1
 
 tokenizer = get_tokenizer("basic_english")
 
+class PandasDataset(Dataset):
+    def __init__(self, dataframe):
+        self.dataframe = dataframe[['Class Index', 'Description']]
+        self.label = dataframe['Class Index']
+        self.description = dataframe['Description']
+
+    def __len__(self):
+        return len(self.dataframe)
+
+    def __getitem__(self, index):
+        return self.dataframe.iloc[index]
+
+class RNNClassifier(nn.Module):
+    def __init__(self, vocab, target_classes):
+        super(RNNClassifier, self).__init__()
+        self.vocab = vocab
+        self.target_classes = target_classes
+        self.embedding_layer = nn.Embedding(num_embeddings=len(vocab), embedding_dim=embed_len)
+        self.rnn = nn.RNN(input_size=embed_len, hidden_size=hidden_dim, num_layers=n_layers, batch_first=True)
+        self.linear = nn.Linear(hidden_dim, len(self.target_classes))
+
+    def forward(self, X_batch):
+        embeddings = self.embedding_layer(X_batch)
+        #import pdb
+        #pdb.set_trace()
+        output, hidden = self.rnn(embeddings, torch.randn(n_layers, len(X_batch), hidden_dim))
+        return self.linear(output[:,-1])
+
 def build_vocabulary(datasets):
     for dataset in datasets:
         for text in dataset:
@@ -102,34 +130,6 @@ def MakePredictions(model, loader):
     Y_preds, Y_shuffled = torch.cat(Y_preds), torch.cat(Y_shuffled)
 
     return Y_shuffled.detach().numpy(), F.softmax(Y_preds, dim=-1).argmax(dim=-1).detach().numpy()
-
-class PandasDataset(Dataset):
-    def __init__(self, dataframe):
-        self.dataframe = dataframe[['Class Index', 'Description']]
-        self.label = dataframe['Class Index']
-        self.description = dataframe['Description']
-
-    def __len__(self):
-        return len(self.dataframe)
-
-    def __getitem__(self, index):
-        return self.dataframe.iloc[index]
-
-class RNNClassifier(nn.Module):
-    def __init__(self, vocab, target_classes):
-        super(RNNClassifier, self).__init__()
-        self.vocab = vocab
-        self.target_classes = target_classes
-        self.embedding_layer = nn.Embedding(num_embeddings=len(vocab), embedding_dim=embed_len)
-        self.rnn = nn.RNN(input_size=embed_len, hidden_size=hidden_dim, num_layers=n_layers, batch_first=True)
-        self.linear = nn.Linear(hidden_dim, len(self.target_classes))
-
-    def forward(self, X_batch):
-        embeddings = self.embedding_layer(X_batch)
-        #import pdb
-        #pdb.set_trace()
-        output, hidden = self.rnn(embeddings, torch.randn(n_layers, len(X_batch), hidden_dim))
-        return self.linear(output[:,-1])
 
 def main():
     train = pd.read_csv('../data/processed/train.csv')
