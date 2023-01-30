@@ -1,8 +1,14 @@
 import re
+import sys
+sys.path.append("../EDA")
 
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import matplotlib.pyplot as plt
+from dython import nominal
+
+from eda import most_common_words
 
 #st.write("Here's our first attempt at using data to create a table:")
 #st.write(pd.read_csv('../data/processed/train.csv'))
@@ -17,31 +23,6 @@ def plot_hist(df, col):
     
     fig = px.histogram(df[col], nbins=90, marginal='box', opacity=0.8, color_discrete_sequence=['indianred'], width=3000, height=750)
     return fig
-
-def most_common_words(df, col):
-    """
-    This function creates a word dictionary
-    for the frequency of words that show up
-    in a pandas series and returns a dataframe 
-    with word and its frequency in the series.
-    """
-    articles = ['the', 'to', 'a', 'of', 'in', 'and', 'on', 'for', 'that', 's', 'with', 'as', 'its', 'at', 'is', 'said', 'by', 'it', 'has', 'an', 'from', 'his', 'us', 'was', 'will', 'have', 'be', 'their', 'are']
-    word_dict = {}
-    def word_count(x):
-        x = x.split(' ')
-        regex = re.compile('[^a-zA-Z]')
-        for word in x:
-            word = regex.sub('', word)
-            word = word.lower()
-            if word in word_dict:
-                word_dict[word] += 1
-            else:
-                word_dict[word] = 1
-    df[col].apply(word_count)
-    word_df = pd.DataFrame(list(word_dict.items()), columns=['Word', 'Frequency'])
-    word_df = word_df[(word_df['Word'].isna() == False) & (word_df['Word'] != '') & ~(word_df['Word'].isin(articles))]
-    word_df = word_df.sort_values(by=['Frequency'], ascending=False)
-    return word_df.reset_index(drop=True)
 
 def plot_horizontal_bar(df):
     """
@@ -60,8 +41,22 @@ def plot_horizontal_bar(df):
 
     #df.plot.barh(x='Word', y='Frequency', color=my_colors, title='Word Frequency Plot - Description', figsize=(20,10)).invert_yaxis()
 
+def plot_corr_heatmap(df):
+    """
+    This function takes a dataframe and 
+    plots a correlation matrix for the features.
+    """
+
+    class_dummies = pd.get_dummies(df['Class Index'])
+    df = df.drop(columns=['Title', 'Description'])
+    #data = pd.concat([data,class_dummies], axis=1)
+    #fig, ax = plt.subplots()
+    return nominal.associations(df, figsize=(20,15),mark_columns=True)
+
 if __name__ == '__main__':
     most_common_words_df = most_common_words(data, 'Description')
+
+    st.set_page_config(layout="wide")
 
     with st.container():
         col1, col2 = st.columns(2)
@@ -71,3 +66,9 @@ if __name__ == '__main__':
             st.plotly_chart(plot_hist(data, option), use_container_width=True)
         with col2:
             st.plotly_chart(plot_horizontal_bar(most_common_words_df), use_container_width=True)
+    
+    with st.container():
+        col1, col2 = st.columns(2)
+        with col1:
+            st.plotly_chart(px.imshow(plot_corr_heatmap(data)['corr'], text_auto=True))
+        
