@@ -1,7 +1,9 @@
+import sys
+sys.path.append("../model")
+
 import streamlit as st
 import torch
-import joblib
-
+import pickle
 from pydantic import BaseModel
 import torch
 from torchtext.data import get_tokenizer
@@ -25,19 +27,17 @@ def load_models(model):
     """
     models = {
         "rnn": torch.load("../model/models/rnn_article_classifier.pt"),
-        "xgboost": joblib.load("../model/models/xgboost.pkl"),
-        "log_reg": joblib.load("../models/multinomial_logistic_regression.pkl")
     }
-    print("models loaded from disk")
+    #print("models loaded from disk")
     return models[model]
 
-def predict(data : RequestBody):
+def predict(description):
     model = load_models("rnn")
     
-    vocab_description = build_vocab_from_iterator(data.description, min_freq=1, specials=["<UNK>"])
+    vocab_description = build_vocab_from_iterator(description, min_freq=1, specials=["<UNK>"])
     vocab_description.set_default_index(vocab_description["<UNK>"])
 
-    tokens = vocab_description(tokenizer(data.description))
+    tokens = vocab_description(tokenizer(description))
     max_words = 25
     if len(tokens)<max_words:
         tokens+([0]* (max_words-len(tokens))) 
@@ -49,8 +49,8 @@ def predict(data : RequestBody):
     pred_class = pred_class[0]
     #pred = int(torch.max(output.data, 1)[1].numpy())
 
-    target_classes = { 1 : "World", 2 : "Sports", 3 : "Business", 4 : "Sci/Tech" }
-    return { 'Article Classification' : target_classes[pred_class] }
+    target_classes = {0: "N/A",  1 : "World", 2 : "Sports", 3 : "Business", 4 : "Sci/Tech" }
+    return target_classes[pred_class]
 
 def main():
     """
@@ -67,7 +67,11 @@ if __name__ == "__main__":
 
     with col2:
         st.title("Enter you article description text:")
-        st.text_input("Enter your article description here:", placeholder="Article Description")
+        description = st.text_input("Enter your article description here:", placeholder="Article Description")
 
+        if st.button('Classify Article'):
+            article_class = predict(description)
+            st.success("Predicted Article Category: %s " % article_class, icon="✅")
+            #st.success("Go Irish!")
     with col3:
         st.write(' ')

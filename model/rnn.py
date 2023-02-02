@@ -14,7 +14,6 @@ from sklearn.metrics import accuracy_score
 import gc
 from torch.optim import Adam
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import bentoml
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
