@@ -1,0 +1,15 @@
+version : "3"
+
+services:
+    article_classification_rnn_api:
+        build:
+            context: ./  
+            dockerfile: ./docker/fast_api/Dockerfile
+        ports:
+            - 8000:8000
+    streamlit_dash:
+        build: 
+            context: ./
+            dockerfile: ./docker/streamlit/Dockerfile
+        ports:
+            - 8501:8501
